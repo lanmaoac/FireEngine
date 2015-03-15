@@ -3,11 +3,9 @@
 
 
 #ifndef HR
-#define HR(x)    { hr = x; if( FAILED(hr) ) { return hr; } }         //自定义一个HR宏，方便执行错误的返回
+#define HR(x)    { hr = x; if( FAILED(hr) ) { return hr; } }     
 #endif
-//-----------------------------------------------------------------------------
-// Desc: 构造函数
-//-----------------------------------------------------------------------------
+
 DInputClass::DInputClass()
 {
 	m_pDirectInput = NULL;
@@ -18,25 +16,20 @@ DInputClass::DInputClass()
 }
 
 
-//-----------------------------------------------------------------------------
-// Name：DInputClass::Init(）
-// Desc: 初始化DirectInput键盘及鼠标输入设备
-//-----------------------------------------------------------------------------
 HRESULT DInputClass::Init(HWND hWnd, HINSTANCE hInstance, DWORD keyboardCoopFlags, DWORD mouseCoopFlags)
 {
 	HRESULT hr;
-	//初始化一个IDirectInput8接口对象
+	
 	HR(DirectInput8Create(hInstance, DIRECTINPUT_VERSION,
 		IID_IDirectInput8, (void**)&m_pDirectInput, NULL));
 
-	//进行键盘设备的初始化
+
 	HR(m_pDirectInput->CreateDevice(GUID_SysKeyboard, &m_KeyboardDevice, NULL));
 	HR(m_KeyboardDevice->SetCooperativeLevel(hWnd, keyboardCoopFlags));
 	HR(m_KeyboardDevice->SetDataFormat(&c_dfDIKeyboard));
 	HR(m_KeyboardDevice->Acquire());
 	HR(m_KeyboardDevice->Poll());
 
-	//进行鼠标设备的初始化
 	HR(m_pDirectInput->CreateDevice(GUID_SysMouse, &m_MouseDevice, NULL));
 	HR(m_MouseDevice->SetCooperativeLevel(hWnd, mouseCoopFlags));
 	HR(m_MouseDevice->SetDataFormat(&c_dfDIMouse));
@@ -47,14 +40,11 @@ HRESULT DInputClass::Init(HWND hWnd, HINSTANCE hInstance, DWORD keyboardCoopFlag
 }
 
 
-//-----------------------------------------------------------------------------
-// Name：DInputClass::GetInput()
-// Desc: 用于获取输入信息的函数
-//-----------------------------------------------------------------------------
+
 void DInputClass::GetInput()
 {
 	HRESULT hr = m_KeyboardDevice->GetDeviceState(sizeof(m_keyBuffer), (void**)&m_keyBuffer);
-	//获取键盘输入消息
+	
 	if (hr)
 	{
 		m_KeyboardDevice->Acquire();
@@ -62,7 +52,7 @@ void DInputClass::GetInput()
 	}
 
 	hr = m_MouseDevice->GetDeviceState(sizeof(DIMOUSESTATE), (void**)&m_MouseState);
-	//获取鼠标输入消息
+
 	if (hr)
 	{
 		m_MouseDevice->Acquire();
@@ -70,10 +60,6 @@ void DInputClass::GetInput()
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Name：DInputClass::IsKeyDown()
-// Desc: 判断键盘上某个键是否按下
-//-----------------------------------------------------------------------------
 bool DInputClass::IsKeyDown(int iKey)
 {
 	if (m_keyBuffer[iKey] & 0x80)
@@ -83,37 +69,23 @@ bool DInputClass::IsKeyDown(int iKey)
 }
 
 
-//-----------------------------------------------------------------------------
-// Name：DInputClass::IsMouseButtonDown()
-// Desc: 判断鼠标上某键是否按下
-//-----------------------------------------------------------------------------
+
 bool DInputClass::IsMouseButtonDown(int button)
 {
 	return (m_MouseState.rgbButtons[button] & 0x80) != 0;
 }
 
-//-----------------------------------------------------------------------------
-// Name：DInputClass::MouseDX
-// Desc: 返回鼠标指针的X轴坐标值
-//-----------------------------------------------------------------------------
+
 float DInputClass::MouseDX()
 {
 	return (float)m_MouseState.lX;
 }
 
-//-----------------------------------------------------------------------------
-// Name：DInputClass::MouseDY
-// Desc: 返回鼠标指针的Y轴坐标值
-//-----------------------------------------------------------------------------
 float DInputClass::MouseDY()
 {
 	return (float)m_MouseState.lY;
 }
 
-//-----------------------------------------------------------------------------
-// Name：DInputClass::MouseDZ
-// Desc: 返回鼠标指针的Z轴坐标值（滚轮）
-//-----------------------------------------------------------------------------
 float DInputClass::MouseDZ()
 {
 	return (float)m_MouseState.lZ;
@@ -121,10 +93,6 @@ float DInputClass::MouseDZ()
 
 
 
-
-//-----------------------------------------------------------------------------
-// Desc: 析构函数
-//-----------------------------------------------------------------------------
 DInputClass::~DInputClass(void)
 {
 	if (m_KeyboardDevice != NULL)

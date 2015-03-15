@@ -6,20 +6,20 @@
 class WaterClass
 {
 private:
-	LPDIRECT3DDEVICE9               m_pd3dDevice;           //D3D设备
-	LPDIRECT3DTEXTURE9          m_pTexture;             //纹理
-	LPDIRECT3DINDEXBUFFER9  m_pIndexBuffer;         //顶点缓存
-	LPDIRECT3DVERTEXBUFFER9 m_pVertexBuffer;        //索引缓存
+	LPDIRECT3DDEVICE9               m_pd3dDevice;        
+	LPDIRECT3DTEXTURE9          m_pTexture;           
+	LPDIRECT3DINDEXBUFFER9  m_pIndexBuffer;         
+	LPDIRECT3DVERTEXBUFFER9 m_pVertexBuffer;       
 
-	int                             m_nCellsPerRow;     // 每行的单元格数
-	int                             m_nCellsPerCol;         // 每列的单元格数
-	int                             m_nVertsPerRow;     // 每行的顶点数
-	int                             m_nVertsPerCol;         // 每列的顶点数
-	int                             m_nNumVertices;     // 顶点总数
-	FLOAT                       m_fWaterWidth;      // 地形的宽度
-	FLOAT                       m_fWaterDepth;      // 地形的深度
-	FLOAT                       m_fCellSpacing;         // 单元格的间距
-	FLOAT                       m_fHeightScale;         // 高度缩放系数
+	int                             m_nCellsPerRow;    
+	int                             m_nCellsPerCol;       
+	int                             m_nVertsPerRow;    
+	int                             m_nVertsPerCol;        
+	int                             m_nNumVertices;     
+	FLOAT                       m_fWaterWidth;     
+	FLOAT                       m_fWaterDepth;     
+	FLOAT                       m_fCellSpacing;        
+	FLOAT                       m_fHeightScale;        
 
 	struct WATERVERTEX
 	{
@@ -31,8 +31,8 @@ private:
 	};
 
 public:
-	WaterClass(IDirect3DDevice9 *pd3dDevice); //构造函数
-	virtual ~WaterClass(void);        //析构函数
+	WaterClass(IDirect3DDevice9 *pd3dDevice); 
+	virtual ~WaterClass(void);       
 
 public:
 	BOOL InitWater(INT nRows, INT nCols, FLOAT fSpace, FLOAT fScale); 

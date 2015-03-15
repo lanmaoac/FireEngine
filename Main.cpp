@@ -148,7 +148,7 @@ void Update(HWND hwnd)
 {
 	g_pDInput->GetInput();
 
-	// 沿摄像机各分量移动视角
+
 	if (g_pDInput->IsKeyDown(DIK_A))  g_pCamera->MoveAlongRightVec(-4.0f);
 	if (g_pDInput->IsKeyDown(DIK_D))  g_pCamera->MoveAlongRightVec(4.0f);
 	if (g_pDInput->IsKeyDown(DIK_W)) g_pCamera->MoveAlongLookVec(4.0f);
@@ -156,7 +156,6 @@ void Update(HWND hwnd)
 	if (g_pDInput->IsKeyDown(DIK_R))  g_pCamera->MoveAlongUpVec(3.0f);
 	if (g_pDInput->IsKeyDown(DIK_F))  g_pCamera->MoveAlongUpVec(-3.0f);
 
-	//沿摄像机各分量旋转视角
 	if (g_pDInput->IsKeyDown(DIK_LEFT))  g_pCamera->RotationUpVec(-0.003f);
 	if (g_pDInput->IsKeyDown(DIK_RIGHT))  g_pCamera->RotationUpVec(0.003f);
 	if (g_pDInput->IsKeyDown(DIK_UP))  g_pCamera->RotationRightVec(-0.003f);
@@ -164,20 +163,20 @@ void Update(HWND hwnd)
 	if (g_pDInput->IsKeyDown(DIK_Q)) g_pCamera->RotationLookVec(0.003f);
 	if (g_pDInput->IsKeyDown(DIK_E)) g_pCamera->RotationLookVec(-0.003f);
 
-	//鼠标控制右向量和上向量的旋转
+
 	g_pCamera->RotationUpVec(g_pDInput->MouseDX()* 0.001f);
 	g_pCamera->RotationRightVec(g_pDInput->MouseDY() * 0.001f);
 
-	//鼠标滚轮控制观察点收缩操作
+	
 	static FLOAT fPosZ = 0.0f;
 	fPosZ += g_pDInput->MouseDZ()*0.03f;
 
-	//计算并设置取景变换矩阵
+	
 	D3DXMATRIX matView;
 	g_pCamera->CalculateViewMatrix(&matView);
 	//Device->SetTransform(D3DTS_VIEW, &matView);
 
-	//把正确的世界变换矩阵存到g_matWorld中
+
 	//D3DXMatrixTranslation(&g_matWorld, 0.0f, 0.0f, fPosZ);
 
 }
@@ -296,7 +295,7 @@ void Display()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 
-	//开始设计一个完整的窗口类
+	
 	WNDCLASSEX wndClass = { 0 };
 	wndClass.cbSize = sizeof(WNDCLASSEX);
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -359,18 +358,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
-	case WM_PAINT:					 // 客户区重绘消息
-		Render(hwnd);          //调用Direct3D_Render函数，进行画面的绘制
-		ValidateRect(hwnd, NULL);   // 更新客户区的显示
-		break;									//跳出该switch语句
+	case WM_PAINT:					
+		Render(hwnd);          
+		ValidateRect(hwnd, NULL);   
+		break;								
 
-	case WM_KEYDOWN:                // 键盘按下消息
-		if (wParam == VK_ESCAPE)    // ESC键
-			DestroyWindow(hwnd);    // 销毁窗口, 并发送一条WM_DESTROY消息
+	case WM_KEYDOWN:                
+		if (wParam == VK_ESCAPE)  
+			DestroyWindow(hwnd);   
 		break;
-	case WM_DESTROY:				//窗口销毁消息
-		Direct3D_CleanUp();     //调用Direct3D_CleanUp函数，清理COM接口对象
-		PostQuitMessage(0);		//向系统表明有个线程有终止请求。用来响应WM_DESTROY消息
+	case WM_DESTROY:				
+		Direct3D_CleanUp();     
+		PostQuitMessage(0);		
 		break;
 	default:
 		return DefWindowProc(hwnd, message, wParam, lParam);

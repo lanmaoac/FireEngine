@@ -1,11 +1,6 @@
 
 #include "d3dx9.h"
 #include "BillBoard.h"
-
-
-//-------------------------------------------------------------------------------------------------
-// Desc: 构造函数
-//-------------------------------------------------------------------------------------------------
 BillBoardClass::BillBoardClass(LPDIRECT3DDEVICE9  pDevice)
 {
 	m_pVertexBuffer = NULL;
@@ -25,7 +20,7 @@ BOOL BillBoardClass::InitBillBoard(float Length)
 
 	BILLBOARDVERTEX vertices[] =
 	{
-		//前面的四个顶点
+		
 		{ -m_Length / 2, 0.0f, 0.0f,        0.0f, 1.0f, },
 		{ -m_Length / 2, m_Length ,0.0f, 0.0f, 0.0f, },
 		{ m_Length  / 2, 0.0f, 0.0f,         1.0f, 1.0f, },
@@ -53,7 +48,7 @@ void BillBoardClass::RenderBillBoard(D3DXVECTOR3 vDir, D3DXMATRIX *matView)
 	
 	D3DXMATRIX matRotion,matWorld,matProj;
 	D3DXMatrixPerspectiveFovLH(
-		&matProj, D3DX_PI * 0.25f, // 45 - degree
+		&matProj, D3DX_PI * 0.25f, 
 		(float)932 / (float)600,
 		1.0f, 30000.0f);
 	D3DXVECTOR3 now = vDir;
