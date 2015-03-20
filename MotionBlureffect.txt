@@ -1,0 +1,89 @@
+extern matrix WorldViewMatrix;
+extern matrix WorldViewProjMatrix; 
+
+texture Texture0;
+texture Texture1;
+texture Texture2;
+
+sampler sampler0 = sampler_state
+{
+	Texture = <Texture0>;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	MipFilter = LINEAR;
+};
+sampler sampler1 = sampler_state
+{
+	Texture = <Texture1>;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	MipFilter = LINEAR;
+};
+sampler sampler2 = sampler_state
+{
+	Texture = <Texture2>;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	MipFilter = LINEAR;
+};
+
+struct VS_OUTPUT 
+{
+   float4 Pos:     POSITION;
+   float2 Txr1:    TEXCOORD0;
+};
+
+VS_OUTPUT vs_main( 
+   float3 inPos: POSITION, 
+   float2 Txr1: TEXCOORD0)
+{
+   VS_OUTPUT Out;
+   Out.Pos  =  mul( float4(inPos.xyz,1.0f),WorldViewProjMatrix);
+   Out.Txr1 =  Txr1;
+   return Out;
+}
+float4 ps_main(VS_OUTPUT intput) : COLOR0
+{
+   return tex2D(sampler0,intput.Txr1);
+}
+technique Copy2Tmp
+{
+	pass P0
+	{
+		vertexShader  = compile vs_2_0 vs_main();
+                 pixelShader  = compile ps_2_0 ps_main();
+        }
+}
+
+
+struct FVS_OUTPUT{
+   float4 Pos: POSITION;
+   float2 texCoord: TEXCOORD0;
+};
+
+FVS_OUTPUT Fvs_main(float4 Pos: POSITION,float2 texCoord: TEXCOORD0){
+   FVS_OUTPUT Out;
+   Out.Pos = float4(Pos.xy, 0, 1);
+   Out.texCoord = texCoord;
+   return Out;
+}
+float4   Fps_main(FVS_OUTPUT input):COLOR
+{
+	float4 color1 = tex2D(sampler1,input.texCoord);	
+	float4 color2 = tex2D(sampler2,input.texCoord);	
+	return lerp(color1,color2,0.1f);
+}
+technique Copy2FrameBuffer
+{
+	pass P0
+	{
+		vertexShader  = compile vs_2_0 Fvs_main();
+                 pixelShader  = compile ps_2_0 Fps_main();
+        }
+}
+
+
+
+
+
+

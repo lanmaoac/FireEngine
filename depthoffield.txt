@@ -1,0 +1,154 @@
+extern matrix WorldViewMatrix;
+extern matrix WorldViewProjMatrix; 
+
+texture ShaderTexture;
+texture SceneNormal;
+texture SceneBlur;
+
+float far_clip = 30000.0f;
+
+float Near_Range=0.05f;
+float Far_Range=0.1f;
+float Near_Dist=0.1f;
+float Far_Dist=0.5f;
+
+sampler sampler0 = sampler_state
+{
+	Texture = <ShaderTexture>;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	MipFilter = LINEAR;
+};
+sampler samplerNormal = sampler_state
+{
+	Texture = <SceneNormal>;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	MipFilter = LINEAR;
+};
+sampler samplerBlur = sampler_state
+{
+	Texture = <SceneBlur>;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	MipFilter = LINEAR;
+};
+
+struct VS_OUTPUT 
+{
+   float4 Pos:     POSITION;
+   float2 Txr1:    TEXCOORD0;
+   float1 Depth:   TEXCOORD1;
+};
+
+VS_OUTPUT vs_main( 
+   float3 inPos: POSITION, 
+   float2 Txr1: TEXCOORD0)
+{
+   VS_OUTPUT Out;
+   Out.Pos  =  mul( float4(inPos.xyz,1.0f),WorldViewProjMatrix);
+   Out.Depth = Out.Pos.w/far_clip;
+   Out.Txr1 =  Txr1;
+   return Out;
+}
+float4 ps_main(VS_OUTPUT input) : COLOR0
+{
+   float Blur = max(clamp(0,1, 1 - (input.Depth-Near_Dist)/Near_Range),
+                clamp(0,1, (input.Depth-(Far_Dist-Far_Range))/Far_Range));
+  
+   return tex2D(sampler0,input.Txr1);
+}
+technique SceenCopy
+{
+	pass P0
+	{
+		vertexShader  = compile vs_2_0 vs_main();
+                 pixelShader  = compile ps_2_0 ps_main();
+        }
+}
+
+
+float viewport_distance=0.003;
+const float4 samples[9] = {
+    -1.0,    -1.0, 0,    1.0/16.0,
+    -1.0,    1.0,    0,    1.0/16.0,
+    1.0,    -1.0, 0,    1.0/16.0,
+    1.0,    1.0,    0,    1.0/16.0,
+    -1.0,    0.0,    0,    2.0/16.0,
+    1.0,    0.0,    0,    2.0/16.0,
+    0.0,    -1.0, 0,    2.0/16.0,
+    0.0,    1.0,    0,    2.0/16.0,
+    0.0,    0.0,   0,    4.0/16.0
+};
+struct BVS_OUTPUT{
+   float4 Pos: POSITION;
+   float2 texCoord: TEXCOORD0;
+};
+
+BVS_OUTPUT Bvs_main(float4 Pos: POSITION,float2 texCoord: TEXCOORD0){
+   BVS_OUTPUT Out;
+   Out.Pos = float4(Pos.xy, 0, 1);
+   Out.texCoord = texCoord;
+   return Out;
+}
+float4   Bps_main(BVS_OUTPUT input):COLOR
+{
+     float4 col = float4(0,0,0,0);
+   for(int i=0;i<9;i++)
+      col += samples[i].w*tex2D(samplerNormal,input.texCoord+
+       float2(samples[i].x*viewport_distance,
+              samples[i].y*viewport_distance));
+   return col;
+}
+technique SceenBlur
+{
+	pass P0
+	{
+		vertexShader  = compile vs_2_0 Bvs_main();
+                 pixelShader  = compile ps_2_0 Bps_main();
+        }
+}
+
+
+
+
+
+struct BBVS_OUTPUT{
+   float4 Pos: POSITION;
+   float2 texCoord: TEXCOORD0;
+};
+
+BBVS_OUTPUT BBvs_main(float4 Pos: POSITION,float2 texCoord: TEXCOORD0){
+   BBVS_OUTPUT Out;
+   Out.Pos = float4(Pos.xy, 0, 1);
+   Out.texCoord = texCoord;
+   return Out;
+}
+float4   BBps_main(BBVS_OUTPUT input):COLOR
+{
+    float4 BlurColor = tex2D(samplerBlur,input.texCoord);
+    float4 SceneColor = tex2D(samplerNormal,input.texCoord);
+    //return SceneColor;
+    //Near_Dist=0.4f ;
+    //float Far_Dist=0.5f;
+    if (SceneColor.a >= Near_Dist  && SceneColor.a <= Far_Dist )
+    return SceneColor;
+    else
+    return BlurColor; 
+}
+technique Final
+{
+	pass P0
+	{
+		 vertexShader  = compile vs_2_0 BBvs_main();
+                  pixelShader  = compile ps_2_0 BBps_main();
+        }
+}
+
+
+
+
+
+
+
+

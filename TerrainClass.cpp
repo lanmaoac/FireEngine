@@ -80,7 +80,7 @@ BOOL TerrainClass::InitTerrain(INT nRows, INT nCols, FLOAT fSpace, FLOAT fScale)
 		{
 			nIndex = i * m_nCellsPerRow + j;		
 			pVertices[nIndex] = TERRAINVERTEX(x, m_vHeightInfo[nIndex], z, j*fCoordU, i*fCoordV); 
-			nIndex++;										
+			//nIndex++;										
 		}
 	}
 
@@ -95,9 +95,9 @@ BOOL TerrainClass::InitTerrain(INT nRows, INT nCols, FLOAT fSpace, FLOAT fScale)
 	m_pIndexBuffer->Lock(0, 0, (void**)&pIndices, 0);
 
 	nIndex = 0;
-	for (int row = 0; row < m_nCellsPerRow - 1; row++)   
+	for (int row = 0; row < m_nCellsPerRow -1; row++)   
 	{
-		for (int col = 0; col < m_nCellsPerCol - 1; col++)  
+		for (int col = 0; col < m_nCellsPerCol -1; col++)  
 		{
 		
 			pIndices[nIndex] = row * m_nCellsPerRow + col;			
@@ -122,16 +122,13 @@ BOOL TerrainClass::RenderTerrain(D3DXMATRIX *pMatWorld, BOOL bRenderFrame)
 	m_pd3dDevice->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(TERRAINVERTEX));
 	m_pd3dDevice->SetFVF(TERRAINVERTEX::FVF);//
 	m_pd3dDevice->SetIndices(m_pIndexBuffer);
-	//m_pd3dDevice->SetTexture(0, m_pTexture);//
+	m_pd3dDevice->SetTexture(0, m_pTexture);//
 
-	//m_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);	
-	//m_pd3dDevice->SetTransform(D3DTS_WORLD, pMatWorld); 
+	m_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);	
+    m_pd3dDevice->SetTransform(D3DTS_WORLD, pMatWorld); 
 	m_pd3dDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
 		m_nNumVertices, 0, m_nNumVertices * 2);		
-
-	//m_pd3dDevice->SetRenderState(D3DRS_LIGHTING, TRUE);  
-	//m_pd3dDevice->SetTexture(0, 0);	
-
+	
 	if (bRenderFrame)  
 	{
 		//m_pd3dDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME); 

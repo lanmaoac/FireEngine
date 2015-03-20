@@ -25,7 +25,8 @@ private:
 	LPDIRECT3DDEVICE9				m_pd3dDevice;			
 	LPDIRECT3DVERTEXBUFFER9	m_pVertexBuffer;		
 	LPDIRECT3DTEXTURE9			m_pTexture;			
-	float										m_Length;					
+	float										m_Length;	
+	ID3DXEffect* BillEffect = 0;
 
 public:
 	BillBoardClass(LPDIRECT3DDEVICE9  pDevice);		

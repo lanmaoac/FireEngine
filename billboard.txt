@@ -1,0 +1,42 @@
+extern matrix WorldViewMatrix;
+extern matrix WorldViewProjMatrix; 
+
+
+texture ShaderTexture;
+sampler sampler0 = sampler_state
+{
+	Texture = <ShaderTexture>;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	MipFilter = LINEAR;
+};
+
+struct VS_OUTPUT 
+{
+   float4 Pos:     POSITION;
+   float2 Txr1:    TEXCOORD0;
+};
+
+VS_OUTPUT vs_main( 
+   float3 inPos: POSITION, 
+   float2 Txr1: TEXCOORD0)
+{
+   VS_OUTPUT Out;
+   Out.Pos  =  mul( float4(inPos.xyz,1.0f),WorldViewProjMatrix);
+   Out.Txr1 =  Txr1;
+   return Out;
+}
+float4 ps_main(VS_OUTPUT input) : COLOR0
+{
+    float4 diffuse = tex2D(sampler0,input.Txr1);
+   clip(diffuse.a -0.25f);  
+   return diffuse;
+}
+technique Normal
+{
+	pass P0
+	{
+		vertexShader  = compile vs_2_0 vs_main();
+                 pixelShader  = compile ps_2_0 ps_main();
+        }
+}

@@ -124,25 +124,28 @@ void Objects_Init()
 	Device->SetRenderState(D3DRS_SPECULARENABLE, true);
 
 	g_pCamera = new CameraClass(Device);
-	g_pCamera->SetCameraPosition(&D3DXVECTOR3(0.0f, 1400.0f, -1800.0f));
+	g_pCamera->SetCameraPosition(&D3DXVECTOR3(0.0f, 14000.0f, -1800.0f));
 	g_pCamera->SetTargetPosition(&D3DXVECTOR3(0.0f, 1200.0f, 0.0f));
 	g_pCamera->SetViewMatrix();
 	g_pCamera->SetProjMatrix();
 
 	g_pTerrain = new TerrainClass(Device);
-	g_pTerrain->LoadTerrainFromFile(L"heighmap.raw", L"terrainstone.jpg");
-	g_pTerrain->InitTerrain(200, 200, 60.0f, 8.0f);
+
+	g_pTerrain->LoadTerrainFromFile(L"hahaha.raw", L"hahaha.jpg");
+
+	g_pTerrain->InitTerrain(399,399, 60.0f, 6.0f);
 
 	g_pWater = new WaterClass(Device);
-	g_pWater->InitWater(200, 200, 60.0f, 8.0f);
+	g_pWater->InitWater(200, 200, 6000.0f, 8.0f);
 
 	g_pSkyBox = new SkyBoxClass(Device);
 	g_pSkyBox->LoadSkyTextureFromFile(L"TropicalSunnyDayFront2048.png", L"TropicalSunnyDayBack2048.png", L"TropicalSunnyDayRight2048.png", L"TropicalSunnyDayLeft2048.png", L"TropicalSunnyDayUp2048.png");
 	g_pSkyBox->InitSkyBox(50000);
 
 	g_pBillBoard = new BillBoardClass(Device);
-	g_pBillBoard->LoadBillBoardTextureFromFile(L"shu.png");
 	g_pBillBoard->InitBillBoard(3000.0f);
+	g_pBillBoard->LoadBillBoardTextureFromFile(L"shu.png");
+	
 }
 void Update(HWND hwnd)
 {
@@ -228,7 +231,7 @@ bool Setup()
 	ID3DXBuffer* errorBuffer = 0;
 	hr = D3DXCreateEffectFromFile(
 		Device,           // associated device
-		L"depthoffield.txt", // effect filename
+		L"billboard.txt", // effect filename
 		0,                // no preprocessor definitions
 		0,                // no ID3DXInclude interface
 		D3DXSHADER_USE_LEGACY_D3DX9_31_DLL,
@@ -280,14 +283,21 @@ void Display()
 	{
 		Device->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(100, 255, 255), 1.0f, 0);
 		Device->BeginScene();
-		 
+		Device->SetRenderState(D3DRS_ZENABLE, true);
 		D3DXVECTOR3 vDir;
 		g_pCamera->GetLookVector(&vDir);
 		D3DXMATRIX matView;
 		g_pCamera->CalculateViewMatrix(&matView);
+		Device->SetTransform(D3DTS_VIEW, &matView);
+
+		D3DXMatrixTranslation(&g_matWorld, 0.0f, 10000.0f, 0.0f);
+		
 
 		g_pBillBoard->RenderBillBoard(vDir, &matView);
-		
+		g_pTerrain->RenderTerrain(&g_matWorld, false);
+		D3DXMatrixTranslation(&g_matWorld, 0.0f, 0.0f, 0.0f);
+		g_pSkyBox->RenderSkyBox(&g_matWorld,0);
+
 		Device->EndScene();
 		Device->Present(0, 0, 0, 0);
 	}
