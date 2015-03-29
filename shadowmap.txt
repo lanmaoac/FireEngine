@@ -1,0 +1,79 @@
+extern matrix LightWorldViewProjMatrix; 
+extern matrix WorldViewProjMatrix; 
+
+float fclip = 3000.0f;
+texture ShaderTexture;
+sampler sampler0 = sampler_state
+{
+	Texture = <ShaderTexture>;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+	MipFilter = LINEAR;
+};
+struct VS_OUTPUT
+{
+   float4 Pos:     POSITION;
+   float2 Coord   : TEXCOORD0;
+};
+
+VS_OUTPUT vs_main( float3 inPos: POSITION,vector normal:NORMAL)
+{
+   VS_OUTPUT Out;
+   Out.Pos   =  mul( float4(inPos.xyz,1.0f),LightWorldViewProjMatrix);
+   Out.Coord =  Out.Pos.zw;
+   return Out;
+}
+float4 ps_main(VS_OUTPUT input) : COLOR0
+{  
+   // return float4(input.Coord.x/input.Coord.y,input.Coord.x/input.Coord.y,input.Coord.x/input.Coord.y,1.0);
+  return float4(input.Coord.y/fclip,input.Coord.y/fclip,input.Coord.y/fclip,1.0);
+}
+technique Normal
+{
+	pass P0
+	{
+		 vertexShader  = compile vs_2_0 vs_main();
+                  pixelShader  = compile ps_2_0 ps_main();
+        }
+}
+
+
+struct VS_OUTPUT_S
+{
+   float4 Pos     : POSITION;
+   float2 Coord   : TEXCOORD0;
+   float4 OtherPos: TEXCOORD1; 
+};
+
+VS_OUTPUT_S vs_main_S( float3 inPos: POSITION , vector normal: NORMAL)
+{
+   VS_OUTPUT_S Out;
+   Out.Pos      =  mul( float4(inPos.xyz,1.0f),WorldViewProjMatrix);
+   //Out.Coord    =  float2(0.5f,0.5f);
+   Out.Coord    =  mul( float4(inPos.xyz,1.0f),LightWorldViewProjMatrix).zw;
+   Out.OtherPos =  mul( float4(inPos.xyz,1.0f),LightWorldViewProjMatrix);
+ 
+   return Out;
+}
+float4 ps_main_S(VS_OUTPUT_S input) : COLOR0
+{  
+      //return float4( 1.0f,1.0f,1.0f,1.0f);
+      float2 ShadowTexC = 0.5 * input.OtherPos.xy / input.OtherPos.w + float2( 0.5, 0.5 );
+      ShadowTexC.y = 1.0f-ShadowTexC.y ; 
+      float4 now = tex2D(sampler0, ShadowTexC);
+      //return now; 
+
+      if ( input.Coord.y/fclip -now.r  > 0.005f )
+      return float4( 0.0f,0.0f,0.0f,0.0f); 
+      else
+      return float4( 1.0f,1.0f,1.0f,1.0f); 	 
+}
+technique Normal_S
+{
+	pass P0
+	{
+		 vertexShader  = compile vs_2_0 vs_main_S();
+                  pixelShader  = compile ps_2_0 ps_main_S();
+        }
+}
+

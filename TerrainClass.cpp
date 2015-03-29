@@ -1,5 +1,7 @@
 #include "TerrainClass.h"
-
+#include <tchar.h>
+#include <string.h>
+#include<atlstr.h>  
 
 TerrainClass::TerrainClass(IDirect3DDevice9* pd3dDevice)
 {
@@ -58,8 +60,13 @@ BOOL TerrainClass::InitTerrain(INT nRows, INT nCols, FLOAT fSpace, FLOAT fScale)
 
 	for (unsigned int i = 0; i<m_vHeightInfo.size(); i++)
 		m_vHeightInfo[i] *= m_fHeightScale;
-	
-	
+
+	//AllocConsole();
+	//freopen("CONOUT$", "w", stdout);
+	//printf("%d\n", m_vHeightInfo.size());
+	//printf("iµÄÖµÎª%d\n", m_vHeightInfo.size());
+	//FreeConsole();
+
 	if (FAILED(m_pd3dDevice->CreateVertexBuffer(m_nNumVertices * sizeof(TERRAINVERTEX),
 		D3DUSAGE_WRITEONLY, TERRAINVERTEX::FVF, D3DPOOL_MANAGED, &m_pVertexBuffer, 0)))
 		return FALSE;
@@ -83,7 +90,9 @@ BOOL TerrainClass::InitTerrain(INT nRows, INT nCols, FLOAT fSpace, FLOAT fScale)
 			//nIndex++;										
 		}
 	}
-
+	//AllocConsole();
+	//freopen("CONOUT$", "w", stdout);
+	//printf("%d\n", nIndex);
 	m_pVertexBuffer->Unlock();
 
 
@@ -122,16 +131,16 @@ BOOL TerrainClass::RenderTerrain(D3DXMATRIX *pMatWorld, BOOL bRenderFrame)
 	m_pd3dDevice->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(TERRAINVERTEX));
 	m_pd3dDevice->SetFVF(TERRAINVERTEX::FVF);//
 	m_pd3dDevice->SetIndices(m_pIndexBuffer);
-	m_pd3dDevice->SetTexture(0, m_pTexture);//
+	//m_pd3dDevice->SetTexture(0, m_pTexture);//
 
-	m_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);	
-    m_pd3dDevice->SetTransform(D3DTS_WORLD, pMatWorld); 
+	//m_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);	
+    //m_pd3dDevice->SetTransform(D3DTS_WORLD, pMatWorld); 
 	m_pd3dDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
 		m_nNumVertices, 0, m_nNumVertices * 2);		
 	
 	if (bRenderFrame)  
 	{
-		//m_pd3dDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME); 
+		m_pd3dDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME); 
 		m_pd3dDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0,
 			m_nNumVertices, 0, m_nNumVertices * 2);  
 		m_pd3dDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);	

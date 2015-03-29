@@ -79,7 +79,7 @@ VOID CameraClass::SetViewMatrix(D3DXMATRIX *pMatrix)
 	
 	if (pMatrix) m_matView = *pMatrix;
 	else CalculateViewMatrix(&m_matView);
-	m_pd3dDevice->SetTransform(D3DTS_VIEW, &m_matView);
+	//m_pd3dDevice->SetTransform(D3DTS_VIEW, &m_matView);
 	
 }
 
@@ -89,7 +89,7 @@ VOID CameraClass::SetProjMatrix(D3DXMATRIX *pMatrix)
 
 	if (pMatrix != NULL) m_matProj = *pMatrix;
 	else D3DXMatrixPerspectiveFovLH(&m_matProj, D3DX_PI / 4.0f, (float)((double)WINDOW_WIDTH / WINDOW_HEIGHT), 1.0f, 300000.0f);
-	m_pd3dDevice->SetTransform(D3DTS_PROJECTION, &m_matProj);
+	//m_pd3dDevice->SetTransform(D3DTS_PROJECTION, &m_matProj);
 }
 
 

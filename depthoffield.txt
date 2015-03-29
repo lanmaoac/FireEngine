@@ -9,8 +9,8 @@ float far_clip = 30000.0f;
 
 float Near_Range=0.05f;
 float Far_Range=0.1f;
-float Near_Dist=0.1f;
-float Far_Dist=0.5f;
+float Near_Dist=0.25f;
+float Far_Dist=0.6f;
 
 sampler sampler0 = sampler_state
 {
@@ -55,8 +55,8 @@ float4 ps_main(VS_OUTPUT input) : COLOR0
 {
    float Blur = max(clamp(0,1, 1 - (input.Depth-Near_Dist)/Near_Range),
                 clamp(0,1, (input.Depth-(Far_Dist-Far_Range))/Far_Range));
-  
-   return tex2D(sampler0,input.Txr1);
+   
+   return float4(tex2D(sampler0,input.Txr1).rgb,input.Depth);
 }
 technique SceenCopy
 {

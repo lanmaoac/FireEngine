@@ -1,6 +1,6 @@
-#define WINDOW_WIDTH	932						
-#define WINDOW_HEIGHT	700						
-#define WINDOW_TITLE	_T("3D Engine") 
+#define WINDOW_WIDTH  932           
+#define WINDOW_HEIGHT 700           
+#define WINDOW_TITLE  _T("3D Engine") 
 
 
 
@@ -20,27 +20,24 @@
 #include "DirectInputClass.h"
 #include "WaterClass.h"
 #include "SkyBoxClass.h"
-#include "BillBoard.h"
-
 #pragma comment(lib,"d3d9.lib")
 #pragma comment(lib,"d3dx9.lib")
 #pragma comment(lib, "dinput8.lib")    
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib, "winmm.lib") 
 
-LRESULT CALLBACK		WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK    WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-TerrainClass*								g_pTerrain = NULL;
-DInputClass*								g_pDInput = NULL;
-CameraClass*							    g_pCamera = NULL;
+TerrainClass*               g_pTerrain = NULL;
+DInputClass*                g_pDInput = NULL;
+CameraClass*                  g_pCamera = NULL;
+CameraClass*                                g_pLightCamera = NULL;
 WaterClass*                                 g_pWater = NULL;
 SkyBoxClass*                                g_pSkyBox = NULL;
-BillBoardClass*								g_pBillBoard = NULL;
+D3DLIGHT9                   g_Light;
+D3DXMATRIX              g_matWorld;
 
-D3DLIGHT9								    g_Light;
-D3DXMATRIX							g_matWorld;
-
-LPDIRECT3DDEVICE9					Device = NULL;
+LPDIRECT3DDEVICE9         Device = NULL;
 
 
 D3DXMATRIX ProjMatrix;
@@ -48,19 +45,13 @@ D3DXMATRIX ProjMatrix;
 
 D3DXHANDLE WorldViewProjHandle = 0;
 
-D3DXHANDLE TexHandle0 = 0;
-D3DXHANDLE TexHandle1 = 0;
-D3DXHANDLE TexHandle2 = 0;
-D3DXHANDLE TexHandle3 = 0;
-
 ID3DXEffect* ToonEffect = 0;
 
+IDirect3DTexture9*           DepthScene = NULL;
 
-
-
-IDirect3DTexture9*           NormalScene = NULL;
-IDirect3DTexture9*           BlurScene = NULL;
-
+ID3DXMesh *meshP;
+ID3DXMesh *meshT;
+D3DXMATRIX  PreView;
 
 HRESULT Direct3D_Init(HWND hwnd, HINSTANCE hInstance)
 {
@@ -124,34 +115,33 @@ void Objects_Init()
 	Device->SetRenderState(D3DRS_SPECULARENABLE, true);
 
 	g_pCamera = new CameraClass(Device);
-	g_pCamera->SetCameraPosition(&D3DXVECTOR3(0.0f, 14000.0f, -1800.0f));
-	g_pCamera->SetTargetPosition(&D3DXVECTOR3(0.0f, 1200.0f, 0.0f));
+	g_pCamera->SetCameraPosition(&D3DXVECTOR3(0.0f, 0.0f, -1000.0f));
+	g_pCamera->SetTargetPosition(&D3DXVECTOR3(0.0f, 0.0f, 1200.0f));
 	g_pCamera->SetViewMatrix();
 	g_pCamera->SetProjMatrix();
+	g_pCamera->CalculateViewMatrix(&PreView);
 
 	g_pTerrain = new TerrainClass(Device);
-
-	g_pTerrain->LoadTerrainFromFile(L"hahaha.raw", L"hahaha.jpg");
-
-	g_pTerrain->InitTerrain(399,399, 60.0f, 6.0f);
+	g_pTerrain->LoadTerrainFromFile(L"heighmap.raw", L"terrainstone.jpg");
+	g_pTerrain->InitTerrain(200, 200, 120.0f, 8.0f);
 
 	g_pWater = new WaterClass(Device);
-	g_pWater->InitWater(200, 200, 6000.0f, 8.0f);
+	g_pWater->InitWater(200, 200, 60.0f, 40.0f);
 
 	g_pSkyBox = new SkyBoxClass(Device);
 	g_pSkyBox->LoadSkyTextureFromFile(L"TropicalSunnyDayFront2048.png", L"TropicalSunnyDayBack2048.png", L"TropicalSunnyDayRight2048.png", L"TropicalSunnyDayLeft2048.png", L"TropicalSunnyDayUp2048.png");
 	g_pSkyBox->InitSkyBox(50000);
 
-	g_pBillBoard = new BillBoardClass(Device);
-	g_pBillBoard->InitBillBoard(3000.0f);
-	g_pBillBoard->LoadBillBoardTextureFromFile(L"shu.png");
-	
+	D3DXCreateTeapot(Device, &meshT, 0);
+	D3DXCreateBox(Device, 100.0f, 100.0f, 100.0f, &meshP, 0);
+
+
 }
 void Update(HWND hwnd)
 {
 	g_pDInput->GetInput();
 
-
+	// 沿摄像机各分量移动视角
 	if (g_pDInput->IsKeyDown(DIK_A))  g_pCamera->MoveAlongRightVec(-4.0f);
 	if (g_pDInput->IsKeyDown(DIK_D))  g_pCamera->MoveAlongRightVec(4.0f);
 	if (g_pDInput->IsKeyDown(DIK_W)) g_pCamera->MoveAlongLookVec(4.0f);
@@ -159,6 +149,7 @@ void Update(HWND hwnd)
 	if (g_pDInput->IsKeyDown(DIK_R))  g_pCamera->MoveAlongUpVec(3.0f);
 	if (g_pDInput->IsKeyDown(DIK_F))  g_pCamera->MoveAlongUpVec(-3.0f);
 
+	//沿摄像机各分量旋转视角
 	if (g_pDInput->IsKeyDown(DIK_LEFT))  g_pCamera->RotationUpVec(-0.003f);
 	if (g_pDInput->IsKeyDown(DIK_RIGHT))  g_pCamera->RotationUpVec(0.003f);
 	if (g_pDInput->IsKeyDown(DIK_UP))  g_pCamera->RotationRightVec(-0.003f);
@@ -166,21 +157,21 @@ void Update(HWND hwnd)
 	if (g_pDInput->IsKeyDown(DIK_Q)) g_pCamera->RotationLookVec(0.003f);
 	if (g_pDInput->IsKeyDown(DIK_E)) g_pCamera->RotationLookVec(-0.003f);
 
-
+	//鼠标控制右向量和上向量的旋转
 	g_pCamera->RotationUpVec(g_pDInput->MouseDX()* 0.001f);
 	g_pCamera->RotationRightVec(g_pDInput->MouseDY() * 0.001f);
 
-	
+	//鼠标滚轮控制观察点收缩操作
 	static FLOAT fPosZ = 0.0f;
 	fPosZ += g_pDInput->MouseDZ()*0.03f;
 
-	
+	//计算并设置取景变换矩阵
 	D3DXMATRIX matView;
 	g_pCamera->CalculateViewMatrix(&matView);
 	//Device->SetTransform(D3DTS_VIEW, &matView);
 
-
-	//D3DXMatrixTranslation(&g_matWorld, 0.0f, 0.0f, fPosZ);
+	//把正确的世界变换矩阵存到g_matWorld中
+	D3DXMatrixTranslation(&g_matWorld, 0.0f, 0.0f, fPosZ);
 
 }
 void Render(HWND hwnd)
@@ -231,7 +222,7 @@ bool Setup()
 	ID3DXBuffer* errorBuffer = 0;
 	hr = D3DXCreateEffectFromFile(
 		Device,           // associated device
-		L"billboard.txt", // effect filename
+		L"shadowmap.txt", // effect filename
 		0,                // no preprocessor definitions
 		0,                // no ID3DXInclude interface
 		D3DXSHADER_USE_LEGACY_D3DX9_31_DLL,
@@ -256,47 +247,98 @@ bool Setup()
 		(float)WINDOW_WIDTH / (float)WINDOW_HEIGHT,
 		1.0f, 30000.0f);
 
-	IDirect3DTexture9* tex = 0;
-	D3DXCreateTextureFromFile(Device, L"terrainstone.jpg", &tex);
-
 	Device->CreateTexture(WINDOW_WIDTH, WINDOW_HEIGHT,
-		1, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &NormalScene, NULL);
-
-	Device->CreateTexture(WINDOW_WIDTH, WINDOW_HEIGHT,
-		1, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &BlurScene, NULL);
-
-
-	TexHandle0 = ToonEffect->GetParameterByName(0, "ShaderTexture");
-	TexHandle1 = ToonEffect->GetParameterByName(0, "SceneNormal");
-	TexHandle2 = ToonEffect->GetParameterByName(0, "SceneBlur");
+		1, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &DepthScene, NULL);
 
 	WorldViewProjHandle = ToonEffect->GetParameterByName(0, "WorldViewProjMatrix");
 
-	ToonEffect->SetTexture(TexHandle0, tex);
-	ToonEffect->SetTexture(TexHandle1, NormalScene);
-	ToonEffect->SetTexture(TexHandle2, BlurScene);
+
+
 	return true;
 }
 void Display()
 {
 	if (Device)
 	{
-		Device->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DCOLOR_XRGB(100, 255, 255), 1.0f, 0);
-		Device->BeginScene();
-		Device->SetRenderState(D3DRS_ZENABLE, true);
-		D3DXVECTOR3 vDir;
-		g_pCamera->GetLookVector(&vDir);
+
 		D3DXMATRIX matView;
 		g_pCamera->CalculateViewMatrix(&matView);
-		Device->SetTransform(D3DTS_VIEW, &matView);
 
-		D3DXMatrixTranslation(&g_matWorld, 0.0f, 10000.0f, 0.0f);
-		
+		D3DXMATRIX g_matWorld1, g_matWorld2;
+		D3DXMatrixTranslation(&g_matWorld2, 0.0f, 0.0f, 400.0f);
+		D3DXMatrixTranslation(&g_matWorld1, 0.0f, 0.0f, 200.0f);
 
-		g_pBillBoard->RenderBillBoard(vDir, &matView);
-		g_pTerrain->RenderTerrain(&g_matWorld, false);
-		D3DXMatrixTranslation(&g_matWorld, 0.0f, 0.0f, 0.0f);
-		g_pSkyBox->RenderSkyBox(&g_matWorld,0);
+		D3DXMATRIX mTrans;
+		D3DXMatrixScaling(&mTrans, 10.0f, 10.0f, 10.0f);
+
+		UINT numPasses = 0;
+
+		Device->BeginScene();
+		SetRenderTarget(0, DepthScene);
+		Device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 120, 1.0f, 0);
+		ToonEffect->SetTechnique("Normal");
+		numPasses = 0;
+		ToonEffect->Begin(&numPasses, 0);
+		for (int i = 0; i < numPasses; i++)
+		{
+			ToonEffect->BeginPass(i);
+			D3DXMATRIX now = mTrans *  g_matWorld1 *matView * ProjMatrix;
+			D3DXMATRIX now2 = mTrans *  g_matWorld1 *PreView * ProjMatrix;
+			ToonEffect->SetMatrix("WorldViewProjMatrix", &now);
+			ToonEffect->SetMatrix("LightWorldViewProjMatrix", &now2);
+			meshP->DrawSubset(0);
+			ToonEffect->EndPass();
+		}
+		ToonEffect->End();
+
+		numPasses = 0;
+		ToonEffect->Begin(&numPasses, 0);
+		for (int i = 0; i < numPasses; i++)
+		{
+			ToonEffect->BeginPass(i);
+			D3DXMATRIX now = g_matWorld2  * matView   * ProjMatrix;
+			D3DXMATRIX now2 = g_matWorld2  * PreView * ProjMatrix;
+			ToonEffect->SetMatrix("WorldViewProjMatrix", &now);
+			ToonEffect->SetMatrix("LightWorldViewProjMatrix", &now2);
+			meshT->DrawSubset(0);
+			ToonEffect->EndPass();
+		}
+		ToonEffect->End();
+
+
+		IDirect3DSurface9* pd3dBackBufferSurface;
+		Device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &pd3dBackBufferSurface);
+		Device->SetRenderTarget(0, pd3dBackBufferSurface);
+		Device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 120, 1.0f, 0);
+		ToonEffect->SetTexture("ShaderTexture", DepthScene);
+		ToonEffect->SetTechnique("Normal_S");
+		numPasses = 0;
+		ToonEffect->Begin(&numPasses, 0);
+		for (int i = 0; i < numPasses; i++)
+		{
+			ToonEffect->BeginPass(i);
+			D3DXMATRIX now = mTrans *  g_matWorld1 *matView * ProjMatrix;
+			D3DXMATRIX now2 = mTrans *  g_matWorld1 *PreView * ProjMatrix;
+			ToonEffect->SetMatrix("LightWorldViewProjMatrix", &now2);
+			ToonEffect->SetMatrix("WorldViewProjMatrix", &now);
+			meshP->DrawSubset(0);
+			ToonEffect->EndPass();
+		}
+
+		numPasses = 0;
+		ToonEffect->Begin(&numPasses, 0);
+		for (int i = 0; i < numPasses; i++)
+		{
+			ToonEffect->BeginPass(i);
+			D3DXMATRIX now = g_matWorld2  * matView   * ProjMatrix;
+			D3DXMATRIX now2 = g_matWorld2  * PreView * ProjMatrix;
+			ToonEffect->SetMatrix("LightWorldViewProjMatrix", &now2);
+			ToonEffect->SetMatrix("WorldViewProjMatrix", &now);
+			meshT->DrawSubset(0);
+			ToonEffect->EndPass();
+		}
+		ToonEffect->End();
+
 
 		Device->EndScene();
 		Device->Present(0, 0, 0, 0);
@@ -305,7 +347,7 @@ void Display()
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 
-	
+	//开始设计一个完整的窗口类
 	WNDCLASSEX wndClass = { 0 };
 	wndClass.cbSize = sizeof(WNDCLASSEX);
 	wndClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -368,18 +410,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
-	case WM_PAINT:					
-		Render(hwnd);          
-		ValidateRect(hwnd, NULL);   
-		break;								
+	case WM_PAINT:           // 客户区重绘消息
+		Render(hwnd);          //调用Direct3D_Render函数，进行画面的绘制
+		ValidateRect(hwnd, NULL);   // 更新客户区的显示
+		break;                  //跳出该switch语句
 
-	case WM_KEYDOWN:                
-		if (wParam == VK_ESCAPE)  
-			DestroyWindow(hwnd);   
+	case WM_KEYDOWN:                // 键盘按下消息
+		if (wParam == VK_ESCAPE)    // ESC键
+			DestroyWindow(hwnd);    // 销毁窗口, 并发送一条WM_DESTROY消息
 		break;
-	case WM_DESTROY:				
-		Direct3D_CleanUp();     
-		PostQuitMessage(0);		
+	case WM_DESTROY:        //窗口销毁消息
+		Direct3D_CleanUp();     //调用Direct3D_CleanUp函数，清理COM接口对象
+		PostQuitMessage(0);   //向系统表明有个线程有终止请求。用来响应WM_DESTROY消息
 		break;
 	default:
 		return DefWindowProc(hwnd, message, wParam, lParam);
